@@ -1,0 +1,29 @@
+html, body{
+    height: 100%;
+}
+body{
+    margin: 0;
+    padding: 0;
+    padding-top: 50px;
+}
+
+#main-hd {
+    height: 50px;
+    border-bottom: 1px solid lightgray;
+}
+
+
+.my-row {
+    height: 100%;
+}
+
+.my-col {
+    border: 3px dotted blue;
+} 
+
+.post {
+    margin-top: 60px;
+    margin-bottom: 30px;
+
+
+}

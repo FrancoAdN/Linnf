@@ -1,0 +1,20 @@
+.post {
+    margin-top: 60px;
+    margin-bottom: 30px;
+    border: 1px solid black;
+}
+  
+.post-avatar {
+    width: 40px; margin: 10px; margin-right: 20px;
+}
+  
+.post-img {
+    width: 100%; margin:0; padding: 0;
+}
+  
+.post-interaction {
+    height: 50px;
+}
+
+
+

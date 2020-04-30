@@ -1,0 +1,18 @@
+.main-hd {
+  height: 50px;
+  border-bottom: 1px solid lightgray;
+}
+
+.card-row{
+  width: 18rem;
+  margin: 20px;
+}
+
+.my-row {
+  height: 100%;
+}
+
+.my-col {
+  border: 3px dotted blue;
+} 
+
