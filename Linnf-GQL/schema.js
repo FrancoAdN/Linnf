@@ -1,4 +1,4 @@
-const {GraphQLObjectType, GraphQLID, GraphQLString, GraphQLList, GraphQLSchema, GraphQLInt} = require('graphql')
+const {GraphQLObjectType, GraphQLID, GraphQLString, GraphQLList, GraphQLSchema, GraphQLInt, GraphQLBoolean} = require('graphql')
 const axios = require('axios')
 
 // User Type
@@ -13,7 +13,6 @@ const  UserType = new GraphQLObjectType({
         user_avatar: { type: GraphQLString}
     })
 })
-
 
 //Post Type
 const PostType = new GraphQLObjectType({
@@ -36,6 +35,43 @@ const UsPostType = new GraphQLObjectType({
     })
 })
 
+//Login Type
+const LoginType = new GraphQLObjectType({
+    name: 'LoginType',
+    fields: () => ({
+        id_user: { type: GraphQLID }
+    })
+})
+
+const ProfileType = new GraphQLObjectType({
+    name: 'ProfileType',
+    fields: () => ({
+        users_post: { type: UsPostType },
+        following: { type: GraphQLInt },
+        followers: { type: GraphQLInt },
+        is_following: { type: GraphQLBoolean }
+    })
+})
+
+const RecentChatsType = new GraphQLObjectType({
+    name: 'RChatType',
+    fields : () => ({
+        id_user: { type: GraphQLID },
+        username: { type: GraphQLString},
+        user_avatar: { type: GraphQLString} 
+    })
+})
+
+const MessageType = new GraphQLObjectType({
+    name: 'MessageType',
+    fields: () => ({
+        id_msg: { type: GraphQLID },
+        from_id: { type: GraphQLInt },
+        to_id: { type: GraphQLInt },
+        message: { type: GraphQLString },
+        date_time: { type: GraphQLString}
+    })
+})
 //RootQuery
 const RootQuery = new GraphQLObjectType({
     name: 'RootQueryType',
@@ -55,19 +91,54 @@ const RootQuery = new GraphQLObjectType({
                 return axios.get(`http://192.168.0.9:4000/users/${args.id_user}`).then(res => res.data)
             }
         },
-        posts:{
-            type: new GraphQLList(PostType),
-            resolve: (parent, args) => {
-                return axios.get('http://192.168.0.9:4000/posts').then(res => res.data)
-            }
-        },
         post: {
             type: PostType,
             args:{
                 id_post: {type: GraphQLID}
             },
             resolve: (parent, args) => {
-                return axios.get(`http://192.168.0.9:4000/posts/${args.id_post}`).then(res => res.data)
+                return axios.get(`http://192.168.0.9:4000/p/${args.id_post}`).then(res => res.data)
+            }
+        },
+        profile: {
+            type: ProfileType,
+            args:{
+                user: {type: GraphQLID},
+                profile:{ type: GraphQLID}
+            },
+            resolve: async (parent, args) => {
+                let profile = await axios.get(`http://192.168.0.9:4000/usersposts/${args.profile}`)
+                let follow = await axios.get(`http://192.168.0.9:4000/count/followers/${args.profile}`)
+                if (args.profile == args.user) {
+                    return {
+                        users_post: profile.data,
+                        following: follow.data.following,
+                        followers: follow.data.followers,
+                        is_following: null
+                    }
+                } else {
+                    let is_following = await axios.get(`http://192.168.0.9:4000/follows?user=${args.user}&&follow=${args.profile}`)
+                    return {
+                        users_post: profile.data,
+                        following: follow.data.following,
+                        followers: follow.data.followers,
+                        is_following: is_following.data
+                    }
+                }
+
+            }
+            
+        },
+        login:{
+            type: LoginType,
+            args:{
+                email:{ type: GraphQLString },
+                pwd: { type: GraphQLString }
+            },
+            resolve: async (parent, {email, pwd}) => {
+                let res = await axios.get(`http://192.168.0.9:4000/login?email=${email}&&pwd=${pwd}`)
+                return res.data                
+            
             }
         },
         users_post: {
@@ -75,11 +146,54 @@ const RootQuery = new GraphQLObjectType({
             args:{
                 id_user:{ type: GraphQLID}
             },
-            resolve: (parent, args) => {
-                return axios.get(`http://192.168.0.9:4000/usersposts/${args.id_user}`).then(res => res.data)
+            resolve: async(parent, args) => {
+                let user = await axios.get(`http://192.168.0.9:4000/users/${args.id_user}`)
+                let posts = await axios.get(`http://192.168.0.9:4000/posts/${args.id_user}`)
+                return {
+                    user: user.data,
+                    posts: posts.data
+                }
+                
             }
             
+        },
+        search: {
+            type: new GraphQLList(UserType),
+            args:{
+                user:{ type: GraphQLString}
+            },
+            resolve: async(parent, args) => {
+                if (args.user != ''){
+                    let user = await axios.get(`http://192.168.0.9:4000/q?user=${args.user}`)
+                    return user.data
+                } else return []
+                
+                
+            }
+            
+        },
+        recent_chats : {
+            type: GraphQLList(RecentChatsType), 
+            args: {
+                user: {type: GraphQLID}
+            },
+            resolve: async (parent, args) => {
+                let chats = await axios.get(`http://192.168.0.9:4000/recentchats?user=${args.user}`)
+                return chats.data
+            }
+        },
+        conversation: {
+            type: GraphQLList(MessageType),
+            args :{
+                from: {type: GraphQLInt},
+                to: {type: GraphQLInt}
+            },
+            resolve: async (parent, args) => {
+                let chats = await axios.get(`http://192.168.0.9:4000/conversation?from=${args.from}&&to=${args.to}`)
+                return chats.data
+            }
         }
+        
 
     }
 })
